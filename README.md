@@ -1,4 +1,4 @@
-# vue-cli-temaplte
+# TripsPlanner Frontend
 
 ## Project setup
 ```
