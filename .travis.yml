@@ -1,0 +1,25 @@
+language: node_js
+
+services:
+  - docker
+
+node_js:
+  - 10
+
+env:
+  - IMAGE_NAME=catone/trips_planner
+
+script:
+  - docker pull "$IMAGE_NAME" || true
+  - docker build --cache-from "$IMAGE_NAME"
+      --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+      --build-arg VCS_REF="$TRAVIS_COMMIT"
+      -t "build/$IMAGE_NAME" -f ./Dockerfile .
+  - docker run -d -P --name temp "build/$IMAGE_NAME"
+  - docker rm -f temp || true
+
+after_success:
+    docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD_SECURE";
+    docker tag "build/$IMAGE_NAME" "$IMAGE_NAME:frontend";
+    docker push "$IMAGE_NAME:frontend";
+
