@@ -82,7 +82,7 @@ export default {
       //   var markerArr = this.markerArr
       var map = new BMap.Map('map'); // 创建Map实例
       var point = new BMap.Point(110.488773, 29.11817); //地图中心点，广州市
-      map.centerAndZoom(point, 13); // 初始化地图,设置中心点坐标和地图级别。
+      map.centerAndZoom(point, 10); // 初始化地图,设置中心点坐标和地图级别。
       map.enableScrollWheelZoom(true); //启用滚轮放大缩小
       //向地图中添加缩放控件
       var ctrlNav = new window.BMap.NavigationControl({
@@ -117,7 +117,7 @@ export default {
         var label = new window.BMap.Label(markerArr[i].title, {
           offset: new window.BMap.Size(20, -10),
         });
-        marker[i].setLabel(label);
+				marker[i].setLabel(label);
         info[i] = new window.BMap.InfoWindow(
           '<p style=’font-size:12px;lineheight:1.8em;’>' +
             markerArr[i].title +
@@ -127,8 +127,10 @@ export default {
             markerArr[i].tel +
             '</br></p>',
 				); // 创建信息窗口对象
+				console.log(info[i]);
 				marker[i].addEventListener('mouseover', () => {
-					this.openInfoWindow(info[i])
+					// marker[i].openInfoWindow(info[i]);  
+					window.openInfoWindow(info[i])
 				})
       }
     },
