@@ -16,7 +16,7 @@
         <div class="section2">
           <div class="searchBox">
             <el-input
-              placeholder="请输入地区"
+              placeholder="请输入目的地"
               v-model="form.city">
               <i slot="prefix" class="el-input__icon el-icon-search"></i>
             </el-input>
@@ -92,7 +92,7 @@ export default {
     return {
       options: {
         controlArrows: false,
-        sectionsColor: ['#41b883', '#cccccc', '#0798ec'],
+        sectionsColor: ['#41b883', '#41b883', '#0798ec'],
       },
       timeOptions: [{
           value: 'am',
@@ -136,8 +136,12 @@ export default {
   },
   methods: {
     genMap() {
+      if (!this.city) {
+        this.$message('请先输入目的地');
+        return;
+      }
       this.$refs.fullpage.api.moveSectionDown();
-      this.getListData()
+      this.popularSearch()
     },
     handleData(list) {
       let result = []
@@ -151,6 +155,18 @@ export default {
         })
       }
       return result;
+    },
+    popularSearch() {
+      this.$axios({
+        url: '/popular/search',
+        params: {
+          target: this.form.city
+        }
+      }).then(res => {
+        if (res.code === 0) {
+          this.markerArr = this.handleData(res.data)
+        }
+      })
     },
     getListData() {
       let markerArr = [
@@ -263,5 +279,15 @@ export default {
   justify-content: center;
   text-align: center;
   flex-direction: column;
+  .searchBox {
+    margin-bottom: 20px;
+    width: 50vw;
+  }
+  .myDate {
+    width: 150px;
+  }
+  .myTime {
+    width: 110px;
+  }
 }
 </style>
