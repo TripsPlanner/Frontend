@@ -63,7 +63,10 @@
           <!-- <el-input placeholder="请输入地区" v-model="form.city">
             <i slot="prefix" class="el-input__icon el-icon-search"></i>
           </el-input> -->
-          <el-button @click="genMap">下一步</el-button>
+          <div>
+            <el-button @click="recommend">查看推荐景点</el-button>
+            <el-button @click="popular">查看热门景点</el-button>
+          </div>
         </div>
       </div>
       <div class="section">
@@ -92,7 +95,7 @@ export default {
     return {
       options: {
         controlArrows: false,
-        sectionsColor: ['#41b883', '#41b883', '#0798ec'],
+        sectionsColor: ['#41b883', '#ffffff', '#0798ec'],
       },
       timeOptions: [{
           value: 'am',
@@ -135,13 +138,30 @@ export default {
     this.$refs.fullpage.api.setKeyboardScrolling(false);
   },
   methods: {
-    genMap() {
-      if (!this.city) {
+    recommend() {
+      const formErrorMsg = {
+        startDate: '请先输入开始日期',
+        endDate: '请先输入结束日期',
+        startTime: '请先选择游玩时间',
+        endTime: '请先选择游玩时间',
+        city: '请先输入目的地',
+      }
+      for(let key in this.form) {
+        if (!this.form[key]) {
+          this.$message(formErrorMsg[key]);
+          return;
+        }
+      }
+      this.getListData()
+      this.$refs.fullpage.api.moveSectionDown();
+    },
+    popular() {
+      if (!this.form.city) {
         this.$message('请先输入目的地');
         return;
       }
-      this.$refs.fullpage.api.moveSectionDown();
       this.popularSearch()
+      this.$refs.fullpage.api.moveSectionDown();
     },
     handleData(list) {
       let result = []
@@ -151,87 +171,32 @@ export default {
           title: item.city + item.destination,
           address: item.address,
           photo: item.photo,
-          tel: item.favorite
+          favorite: item.favorite
         })
       }
       return result;
     },
+    // 热门
     popularSearch() {
+      const loading = this.$loading({
+        lock: false,
+        text: '提交中',
+        background: 'rgba(0, 0, 0, 0.4)'
+      })
       this.$axios({
         url: '/popular/search',
         params: {
           target: this.form.city
         }
       }).then(res => {
+        loading.close()
         if (res.code === 0) {
           this.markerArr = this.handleData(res.data)
         }
       })
     },
+    // 推荐
     getListData() {
-      let markerArr = [
-        {
-          "id": 1,
-          "tid": 1024,
-          "destination": "天门山",
-          "address": "张家界市永定区南部8公里处",
-          "favorite": 10,
-          "stime": 4,
-          "coordinateX": 110.488773,
-          "coordinateY": 29.11817,
-          "city": "张家界",
-          "photo": "https://p4-q.mafengwo.net/s10/M00/38/10/wKgBZ12AWPSAGibIAAEKOqBNYYE213.jpg"
-        },
-        {
-          "id": 2,
-          "tid": 1025,
-          "destination": "大峡谷玻璃桥",
-          "address": "张家界大峡谷景区,位于张家界市的慈利县三家寺乡",
-          "favorite": 8,
-          "stime": 8,
-          "coordinateX": 110.707811,
-          "coordinateY": 29.40118,
-          "city": "张家界",
-          "photo": "https://p1-q.mafengwo.net/s11/M00/79/E8/wKgBEFsaNbiATuM8AAsrx8BmJgg86.jpeg"
-        },
-        {
-          "id": 5,
-          "tid": 1028,
-          "destination": "国家森林公园",
-          "address": "湖南省张家界市武陵源区金鞭路279号",
-          "favorite": 8,
-          "stime": 16,
-          "coordinateX": 110.441345,
-          "coordinateY": 29.321096,
-          "city": "张家界",
-          "photo": "http://zjj.cqyouqia.com/upload/201911/09/201911091315224384.jpg"
-        },
-        {
-          "id": 3,
-          "tid": 1026,
-          "destination": "苗寨",
-          "address": "湖南省军地坪武陵源风景名胜区",
-          "favorite": 7,
-          "stime": 8,
-          "coordinateX": 110.005176,
-          "coordinateY": 29.395766,
-          "city": "张家界",
-          "photo": "https://p3-q.mafengwo.net/s5/M00/F6/0E/wKgB21AGepW1vTaXABDIDleo5kE54.jpeg"
-        },
-        {
-          "id": 4,
-          "tid": 1027,
-          "destination": "凤凰古城",
-          "address": "湖南省湘西土家族苗族自治州的西南部",
-          "favorite": 7,
-          "stime": 8,
-          "coordinateX": 109.609029,
-          "coordinateY": 27.953214,
-          "city": "张家界",
-          "photo": "https://p2-q.mafengwo.net/s13/M00/36/C1/wKgEaVyjadiAAvf4AAJ7W7tTMLM96.jpeg"
-        }
-      ]
-      this.markerArr = this.handleData(markerArr)
       const {
         startDate,
         endDate,
@@ -239,6 +204,11 @@ export default {
         endTime,
         city,
       } = this.form;
+      const loading = this.$loading({
+        lock: false,
+        text: '提交中',
+        background: 'rgba(0, 0, 0, 0.4)'
+      })
       this.$axios({
         url: '/guideline/search',
         methods: 'get',
@@ -250,8 +220,24 @@ export default {
           end_stage: endTime,
         }
       }).then(res => {
-        console.log(res);
+        loading.close()
+        if (res.code === 0) {
+          this.markerArr = this.handleRecommandData(res.data)
+        }
       })
+    },
+    handleRecommandData(list) {
+      let result = []
+      for(let item of list) {
+        result.push({
+          point: item.CoordinateX + ',' +item.CoordinateY,
+          title: item.N,
+          address: item.N,
+          photo: '',
+          favorite: ''
+        })
+      }
+      return result
     }
   },
 };
